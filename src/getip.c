@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include<arpa/inet.h>
+#include <arpa/inet.h>
 
-int main(int argc, char *argv[]) {
+int ip(int argc, char *argv[]) {
     struct hostent *h;
 
     if (argc != 2) {

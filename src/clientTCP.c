@@ -14,7 +14,7 @@
 #define SERVER_PORT 6000
 #define SERVER_ADDR "192.168.28.96"
 
-int main(int argc, char **argv) {
+int tcp(int argc, char **argv) {
 
     if (argc > 1)
         printf("**** No arguments needed. They will be ignored. Carrying ON.\n");
