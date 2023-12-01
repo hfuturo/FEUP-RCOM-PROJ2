@@ -12,15 +12,18 @@ typedef struct {
     char host[MAX_LENGTH];
     char file[MAX_LENGTH];
     char ip[MAX_LENGTH];
+    int port;
 } URL;
 
 int parse_url(const char* parameters, URL* url);
 
 int get_ip(const char* hostname, char* ip);
 
+int get_port(const char* resource, URL* url);
+
 int open_socket(const URL* url, int* sockfd);
 
-int establish_connection(const int sockfd, const URL* url);
+int establish_connection(const int sockfd, URL* url);
 
 int send_data(const int sockfd, const char* buffer);
 

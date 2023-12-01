@@ -118,6 +118,29 @@ int get_ip(const char* hostname, char* ip) {
     return 0;
 }
 
+int get_port(const char* resource, URL* url) {
+    if (!url) {
+        printf("Error, url is NULL in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    char param[60];
+    strcpy(param, resource);
+
+    strtok(param, "(");
+
+    for (int i = 0; i < 4; i++) {
+        strtok(NULL, ",");
+    }
+
+    int port1 = atoi(strtok(NULL, ","));
+    int port2 = atoi(strtok(NULL, ")"));
+
+    url->port = port1 * port2;
+
+    return 0;
+}
+
 int open_socket(const URL* url, int* sockfd) {
     struct sockaddr_in server_addr;
 
@@ -157,7 +180,7 @@ int open_socket(const URL* url, int* sockfd) {
     return 0;
 }
 
-int establish_connection(const int sockfd, const URL* url) {
+int establish_connection(const int sockfd, URL* url) {
     char user[100], password[100], passive[] = "pasv\n";
 
     snprintf(user, 100, "USER %s\n", url->user);
@@ -186,6 +209,11 @@ int establish_connection(const int sockfd, const URL* url) {
     if (receive_data(sockfd, response) == -1) return -1;
     if (strncmp(response, "227", 3) != 0) {
         printf("\nError, server responded with wrong code to \"pasv\"\n");
+        return -1;
+    }
+
+    if (get_port(response, url) == -1) {
+        printf("Error, get_port() in \"%s()\"\n", __func__);
         return -1;
     }
 
