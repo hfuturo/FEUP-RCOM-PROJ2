@@ -1,7 +1,7 @@
 #ifndef _FTP_H_
 #define _FTP_H_
 
-#define MAX_LENGTH 100
+#define MAX_LENGTH 612
 
 #define SERVER_PORT 21
 
@@ -18,8 +18,14 @@ int parse_url(const char* parameters, URL* url);
 
 int get_ip(const char* hostname, char* ip);
 
-int open_socket(const URL* url, int* socketid);
+int open_socket(const URL* url, int* sockfd);
 
-int close_socket(const int socketfd);
+int establish_connection(const int sockfd, const URL* url);
+
+int send_data(const int sockfd, const char* buffer);
+
+int receive_data(const int sockfd, char* response);
+
+int close_socket(const int sockfd);
 
 #endif
