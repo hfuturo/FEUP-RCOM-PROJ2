@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
         printf("Error, get_ip() in \"%s()\"\n", __func__);
         exit(-1);
     }
+
     // printf("User: %s\n"
     //         "Password: %s\n"
     //         "Host: %s\n"
@@ -46,26 +47,51 @@ int main(int argc, char** argv) {
     //         url.file,
     //         url.ip); 
 
-    int sockfd;
-    if (open_socket(&url, &sockfd) == -1) {
+    int controlSockfd;
+    if (open_socket(url.ip, SERVER_PORT, &controlSockfd) == -1) {
         printf("Error, open_socket() in \"%s()\"\n", __func__);
         exit(-1);
     }
 
+    char serverResponse[MAX_LENGTH];
+
+    // recebe confirmação
+    if (receive_data(controlSockfd, serverResponse) == -1) {
+        printf("Error, receive_data() in \"%s()\"\n", __func__);
+        exit(-1);
+    }
+
+    if (strncmp(serverResponse, "220", 3) != 0) {
+        printf("Error, server responded with wrong code in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    char response[60];
     // faz login e entra em modo passivo
-    if (establish_connection(sockfd, &url) == -1) {
+    if (establish_connection(controlSockfd, &url, response) == -1) {
         printf("Error, establish_connection() in \"%s()\"\n", __func__);
-        close_socket(sockfd);
+        close_socket(controlSockfd);
         exit(-1);
     }
 
-    if (close_socket(sockfd) == -1) {
-        printf("Error, close_socket() in \"%s()\"\n", __func__);
-        close_socket(sockfd);
+    int dataSockPort;
+    char dataSockIp[50];
+    if (get_data_socket_info(response, dataSockIp, &dataSockPort) == -1) {
+        printf("Error, get_data_socket_info() in \"%s()\"\n", __func__);
+        close_socket(controlSockfd);
         exit(-1);
     }
 
-    return 0;
+    int dataSockfd;
+
+    // open data socket
+    if (open_socket(dataSockIp, dataSockPort, &dataSockfd) == -1) {
+        printf("Error, open_socket(data) in \"%s()\"\n", __func__);
+        close_socket(controlSockfd);
+        exit(-1);
+    }
+
+    return close_socket(controlSockfd) || close_socket(dataSockfd);
 }
 
 // ftp://[user:password@]host/path/file.txt
@@ -118,9 +144,9 @@ int get_ip(const char* hostname, char* ip) {
     return 0;
 }
 
-int get_port(const char* resource, URL* url) {
-    if (!url) {
-        printf("Error, url is NULL in \"%s()\"\n", __func__);
+int get_data_socket_info(const char* resource, char* ip, int* port) {
+    if (!resource || !ip || !port) {
+        printf("Error, argument is NULL in \"%s()\"\n", __func__);
         return -1;
     }
 
@@ -130,32 +156,34 @@ int get_port(const char* resource, URL* url) {
     strtok(param, "(");
 
     for (int i = 0; i < 4; i++) {
-        strtok(NULL, ",");
+        char* token = strtok(NULL, ",");
+        strcat(ip, token);
+        if (i < 3) strcat(ip, ".");
     }
 
     int port1 = atoi(strtok(NULL, ","));
     int port2 = atoi(strtok(NULL, ")"));
 
-    url->port = port1 * 256 + port2;
+    *port = port1 * 256 + port2;
 
     return 0;
 }
 
-int open_socket(const URL* url, int* sockfd) {
+int open_socket(const char* ip, const int port, int* sockfd) {
     struct sockaddr_in server_addr;
 
     /* server address handling */
     bzero((char *) &server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(url->ip);    /* 32 bit Internet address network byte ordered */
-    server_addr.sin_port = htons(SERVER_PORT);        /* server TCP port must be network byte ordered */
+    server_addr.sin_addr.s_addr = inet_addr(ip);    /* 32 bit Internet address network byte ordered */
+    server_addr.sin_port = htons(port);        /* server TCP port must be network byte ordered */
 
     /* open a TCP socket */
     if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("Error, socket() in \"%s()\"\n", __func__);
         return -1;
     }
-    
+
     /* connect to the server */
     if (connect(*sockfd,
                 (struct sockaddr *) &server_addr,
@@ -164,42 +192,29 @@ int open_socket(const URL* url, int* sockfd) {
         return -1;
     }
 
-    char response[MAX_LENGTH];
-
-    // recebe confirmação
-    if (receive_data(*sockfd, response) == -1) {
-        printf("Error, receive_data() in \"%s()\"\n", __func__);
-        exit(-1);
-    }
-
-    if (strncmp(response, "220", 3) != 0) {
-        printf("Error, server responded with wrong code in \"%s()\"\n", __func__);
-        return -1;
-    }
-
     return 0;
 }
 
-int establish_connection(const int sockfd, URL* url) {
+int establish_connection(const int sockfd, URL* url, char* response) {
     char user[100], password[100], passive[] = "pasv\n";
 
     snprintf(user, 100, "USER %s\n", url->user);
     snprintf(password, 100, "PASS %s\n", url->password);
 
-    char response[MAX_LENGTH];
+    char responseAux[MAX_LENGTH];
 
     // user
     if (send_data(sockfd, user) == -1) return -1;
-    if (receive_data(sockfd, response) == -1) return -1;
-    if (strncmp(response, "331", 3) != 0) {
+    if (receive_data(sockfd, responseAux) == -1) return -1;
+    if (strncmp(responseAux, "331", 3) != 0) {
         printf("\nError, server responded with wrong code to USER %s in \"%s()\"\n", url->user, __func__);
         return -1;
     }
 
     // password
     if (send_data(sockfd, password) == -1) return -1;
-    if (receive_data(sockfd, response) == -1) return -1;
-    if (strncmp(response, "230", 3) != 0) {
+    if (receive_data(sockfd, responseAux) == -1) return -1;
+    if (strncmp(responseAux, "230", 3) != 0) {
         printf("\nError, server responded with wrong code to \"Password %s\" in \"%s()\"\n", url->password, __func__);
         return -1;
     }
@@ -209,11 +224,6 @@ int establish_connection(const int sockfd, URL* url) {
     if (receive_data(sockfd, response) == -1) return -1;
     if (strncmp(response, "227", 3) != 0) {
         printf("\nError, server responded with wrong code to \"pasv\"\n");
-        return -1;
-    }
-
-    if (get_port(response, url) == -1) {
-        printf("Error, get_port() in \"%s()\"\n", __func__);
         return -1;
     }
 

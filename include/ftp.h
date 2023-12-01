@@ -6,24 +6,23 @@
 #define SERVER_PORT 21
 
 typedef struct {
-    char user[MAX_LENGTH];
-    char password[MAX_LENGTH];
+    char user[50];
+    char password[50];
     char path[MAX_LENGTH];
-    char host[MAX_LENGTH];
-    char file[MAX_LENGTH];
-    char ip[MAX_LENGTH];
-    int port;
+    char host[50];
+    char file[50];
+    char ip[50];
 } URL;
 
 int parse_url(const char* parameters, URL* url);
 
 int get_ip(const char* hostname, char* ip);
 
-int get_port(const char* resource, URL* url);
+int get_data_socket_info(const char* resource, char* ip, int* port);
 
-int open_socket(const URL* url, int* sockfd);
+int open_socket(const char* ip, const int port, int* sockfd);
 
-int establish_connection(const int sockfd, URL* url);
+int establish_connection(const int sockfd, URL* url, char* response);
 
 int send_data(const int sockfd, const char* buffer);
 
