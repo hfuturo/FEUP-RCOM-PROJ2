@@ -55,11 +55,13 @@ int main(int argc, char** argv) {
     // faz login e entra em modo passivo
     if (establish_connection(sockfd, &url) == -1) {
         printf("Error, establish_connection() in \"%s()\"\n", __func__);
+        close_socket(sockfd);
         exit(-1);
     }
 
     if (close_socket(sockfd) == -1) {
         printf("Error, close_socket() in \"%s()\"\n", __func__);
+        close_socket(sockfd);
         exit(-1);
     }
 
@@ -147,29 +149,44 @@ int open_socket(const URL* url, int* sockfd) {
         exit(-1);
     }
 
+    if (strncmp(response, "220", 3) != 0) {
+        printf("Error, server responded with wrong code in \"%s()\"\n", __func__);
+        return -1;
+    }
+
     return 0;
 }
 
 int establish_connection(const int sockfd, const URL* url) {
-    char commands[3][MAX_LENGTH] = {
-        "USER ",
-        "PASS ",
-        "pasv"
-    };
+    char user[100], password[100], passive[] = "pasv\n";
 
-    strcat(commands[0], url->user);
-    strcat(commands[1], url->password);
-    for (int i = 0; i < 3; i++) {
-        if (send_data(sockfd, commands[i]) == -1) {
-            printf("Error, send_data() in \"%s()\"\n", __func__);
-            return -1;
-        }
+    snprintf(user, 100, "USER %s\n", url->user);
+    snprintf(password, 100, "PASS %s\n", url->password);
 
-        char response[MAX_LENGTH];
-        if (receive_data(sockfd, response) == -1) {
-            printf("Error, receive_data() in \"%s()\"\n", __func__);
-            return -1;
-        }
+    char response[MAX_LENGTH];
+
+    // user
+    if (send_data(sockfd, user) == -1) return -1;
+    if (receive_data(sockfd, response) == -1) return -1;
+    if (strncmp(response, "331", 3) != 0) {
+        printf("\nError, server responded with wrong code to USER %s in \"%s()\"\n", url->user, __func__);
+        return -1;
+    }
+
+    // password
+    if (send_data(sockfd, password) == -1) return -1;
+    if (receive_data(sockfd, response) == -1) return -1;
+    if (strncmp(response, "230", 3) != 0) {
+        printf("\nError, server responded with wrong code to \"Password %s\" in \"%s()\"\n", url->password, __func__);
+        return -1;
+    }
+
+    // passive mode
+    if (send_data(sockfd, passive) == -1) return -1;
+    if (receive_data(sockfd, response) == -1) return -1;
+    if (strncmp(response, "227", 3) != 0) {
+        printf("\nError, server responded with wrong code to \"pasv\"\n");
+        return -1;
     }
 
     return 0;
@@ -187,7 +204,7 @@ int send_data(const int sockfd, const char* buffer) {
         printf("Error, write() in \"%s()\"\n", __func__);
         return -1;
     }
-    printf("\nSend (%ld bytes):\n%s\n", bytes, buffer);
+    printf("\nSend (%ld bytes):\n%s", bytes, buffer);
 
     if ((bytes = write(sockfd, "\n", 1)) < 0) {
         printf("Error, write() in \"%s()\"\n", __func__);
