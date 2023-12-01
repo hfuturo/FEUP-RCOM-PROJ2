@@ -136,7 +136,7 @@ int get_port(const char* resource, URL* url) {
     int port1 = atoi(strtok(NULL, ","));
     int port2 = atoi(strtok(NULL, ")"));
 
-    url->port = port1 * port2;
+    url->port = port1 * 256 + port2;
 
     return 0;
 }
