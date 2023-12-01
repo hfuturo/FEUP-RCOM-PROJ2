@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "ftp.h"
 
@@ -21,16 +24,23 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
+    if (get_ip(url.host, url.ip) == -1) {
+        printf("Error, get_ip() in \"%s()\"\n", __func__);
+        exit(-1);
+    }
+
     printf("User: %s\n"
             "Password: %s\n"
             "Host: %s\n"
             "Path: %s\n"
-            "File: %s\n",
+            "File: %s\n"
+            "IP: %s\n",
             url.user,
             url.password,
             url.host,
             url.path,
-            url.file);
+            url.file,
+            url.ip);
 
     return 0;
 }
@@ -62,6 +72,25 @@ int parse_url(const char* parameters, URL* url) {
 
     char* file = strrchr(token, '/');
     strcpy(url->file, file == NULL ? token : file+1);
+
+    return 0;
+}
+
+int get_ip(const char* hostname, char* ip) {
+    if (!hostname) {
+        printf("Error, hostname is NULL in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    struct hostent* h;
+
+    // get IP from host
+    if ((h = gethostbyname(hostname)) == NULL) {
+        printf("Error, gethostbyname() in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    strcpy(ip, inet_ntoa(*(struct in_addr *) h->h_addr));
 
     return 0;
 }
