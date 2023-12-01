@@ -21,7 +21,7 @@ run_test: $(BIN)/ftp
 
 .PHONY: run_test2
 run_test2: $(BIN)/ftp
-	./$(BIN)/ftp ftp://[user:password@]host/file.txt
+	./$(BIN)/ftp ftp://[user:password@]ftp.up.pt/file.txt
 
 .PHONY: clean
 clean:

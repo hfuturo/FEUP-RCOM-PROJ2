@@ -4,6 +4,8 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 #include "ftp.h"
 
@@ -41,6 +43,18 @@ int main(int argc, char** argv) {
             url.path,
             url.file,
             url.ip);
+
+    int socketfd;
+
+    if (open_socket(&url, &socketfd) == -1) {
+        printf("Error, open_socket() in \"%s()\"\n", __func__);
+        exit(-1);
+    }
+
+    if (close_socket(socketfd) == -1) {
+        printf("Error, close_socket() in \"%s()\"\n", __func__);
+        exit(-1);
+    }
 
     return 0;
 }
@@ -91,6 +105,42 @@ int get_ip(const char* hostname, char* ip) {
     }
 
     strcpy(ip, inet_ntoa(*(struct in_addr *) h->h_addr));
+
+    return 0;
+}
+
+int open_socket(const URL* url, int* socketid) {
+    int sockfd;
+    struct sockaddr_in server_addr;
+
+    /* server address handling */
+    bzero((char *) &server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(url->ip);    /* 32 bit Internet address network byte ordered */
+    server_addr.sin_port = htons(SERVER_PORT);        /* server TCP port must be network byte ordered */
+
+    /* open a TCP socket */
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("Error, socket() in \"%s()\"\n", __func__);
+        return -1;
+    }
+    
+    /* connect to the server */
+    if (connect(sockfd,
+                (struct sockaddr *) &server_addr,
+                sizeof(server_addr)) < 0) {
+        printf("Error, connect() in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    return 0;
+}
+
+int close_socket(const int socketfd) {
+    if (close(socketfd) < 0) {
+        printf("Error, close() in \"%s()\"\n", __func__);
+        return -1;
+    }
 
     return 0;
 }
