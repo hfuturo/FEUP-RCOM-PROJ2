@@ -162,3 +162,49 @@ int close_socket(const int sockfd) {
 
     return 0;
 }
+
+int request_download(const int sockfd, const char* path) {
+    char command[MAX_LENGTH], response[MAX_LENGTH];
+
+    snprintf(command, MAX_LENGTH, "retr %s\n", path);
+    if (send_data(sockfd, command) == -1) {
+        printf("Error, send_data() in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    if (receive_data(sockfd, "150", response) == -1) {
+        printf("Error, receive_data() in \"%s()\"\n", __func__);
+        return -1;
+    }
+    return 0;
+}
+
+int download(const int controlSockfd, const int dataSockfd, const char* file ,const char* expected) {
+    FILE* fd = fopen(file, "a+");
+    if (!fd) {
+        printf("Error creating file in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    char buffer[MAX_LENGTH];
+
+    while (true) {
+        if (receive_data(dataSockfd, NULL, buffer) == -1) {
+            printf("Error, receive_data() in \"%s()\"\n", __func__);
+            return -1;
+        }
+        if (strlen(buffer) == 0) break;
+        fwrite(buffer, strlen(buffer), sizeof(char), fd);
+        memset(buffer, 0, MAX_LENGTH);
+    }
+
+    char response[50];
+    if (receive_data(controlSockfd, "226", response) == -1) {
+        printf("Error, receive_data() in \"%s()\"\n", __func__);
+        return -1;
+    }
+
+    fclose(fd);
+    
+    return 0;
+}

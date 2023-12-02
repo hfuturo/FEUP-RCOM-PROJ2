@@ -19,4 +19,8 @@ int receive_data(const int sockfd, const char* expected, char* response);
 
 int close_socket(const int sockfd);
 
+int request_download(const int sockfd, const char* path);
+
+int download(const int controlSockfd, const int dataSockfd, const char* file, const char* expected);
+
 #endif

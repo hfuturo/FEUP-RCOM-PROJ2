@@ -13,16 +13,16 @@ $(BIN)/ftp: $(SRC)/*.c
 
 .PHONY: run
 run: $(BIN)/ftp
-	./$(BIN)/ftp ftp://[$(user):$(password)@]$(host)/$(url)
+	rm -f *.txt; ./$(BIN)/ftp ftp://[$(user):$(password)@]$(host)/$(url)
 
 .PHONY: run_test
 run_test: $(BIN)/ftp
-	./$(BIN)/ftp ftp://[anonymous:anonymous@]ftp.up.pt/pub/kodi/timestamp.txt
+	rm -f *.txt; ./$(BIN)/ftp ftp://[anonymous:anonymous@]ftp.up.pt/pub/kodi/timestamp.txt
 
-.PHONY: run_test2
-run_test2: $(BIN)/ftp
-	./$(BIN)/ftp ftp://[anonymous:anonymous@]ftp.up.pt/file.txt
+.PHONY: run_lab
+run_lab: $(BIN)/ftp
+	rm -f *.txt; ./$(BIN)/ftp ftp://[anonymous:anonymous@]netlab1.fe.up.pt/pub/kodi/timestamp.txt
 
 .PHONY: clean
 clean:
-	rm -f $(BIN)/ftp
+	rm -f $(BIN)/ftp *.txt

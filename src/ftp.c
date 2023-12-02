@@ -64,6 +64,20 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
+    if (request_download(controlSockfd, url.path) == -1) {
+        printf("Error, request_download() in \"%s()\"\n", __func__);
+        close_socket(controlSockfd);
+        close_socket(dataSockfd);
+        exit(-1);
+    }
+
+    if (download(controlSockfd, dataSockfd, url.file , "226") == -1) {
+        printf("Error, download() in \"%s()\"\n", __func__);
+        close_socket(controlSockfd);
+        close_socket(dataSockfd);
+        exit(-1);
+    }
+
     return close_socket(controlSockfd) || close_socket(dataSockfd);
 }
 
