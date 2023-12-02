@@ -190,13 +190,13 @@ int download(const int controlSockfd, const int dataSockfd, const char* file ,co
         memset(buffer, 0, MAX_LENGTH);
     }
 
+    fclose(fd);
+
     char response[MAX_LENGTH];
     if (receive_data(controlSockfd, "226", response) == -1) {
         printf("Error, receive_data() in \"%s()\"\n", __func__);
         return -1;
     }
 
-    fclose(fd);
-    
     return 0;
 }
