@@ -186,7 +186,7 @@ int download(const int controlSockfd, const int dataSockfd, const char* file ,co
 
     size_t bytes;
     while ((bytes = read(dataSockfd, buffer, MAX_LENGTH)) > 0) {
-        fwrite(buffer, strlen(buffer), sizeof(char), fd);
+        fwrite(buffer, bytes, sizeof(char), fd);
         memset(buffer, 0, MAX_LENGTH);
     }
 
