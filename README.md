@@ -13,17 +13,16 @@ $ make user=? password=? host=? url=? run
 ```
 , onde `?` são as variáveis introduzidas pelo user no terminal
 
-### Correr teste
+### Correr testes
 
 ```bash
-$ make run_test
+$ make run_teste
 ```
-
-### Correr teste 2
 
 ```bash
-$ make run_test2
+$ make run_testeX
 ```
+X = (1 a 5)
 
 ### Limpar:
 
