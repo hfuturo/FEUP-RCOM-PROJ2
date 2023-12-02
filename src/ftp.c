@@ -88,7 +88,7 @@ int parse_url(const char* parameters, URL* url) {
         return -1;
     }
 
-    char param[500];
+    char param[MAX_LENGTH];
     strcpy(param, parameters);
 
     // resta: user:password@]host/path/file.txt

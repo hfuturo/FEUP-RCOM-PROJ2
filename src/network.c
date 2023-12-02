@@ -117,11 +117,6 @@ int send_data(const int sockfd, const char* buffer) {
     }
     printf("\nSend (%ld bytes):\n%s", bytes, buffer);
 
-    if ((bytes = write(sockfd, "\n", 1)) < 0) {
-        printf("Error, write() in \"%s()\"\n", __func__);
-        return -1;
-    }
-
     return 0;
 }
 
@@ -187,18 +182,15 @@ int download(const int controlSockfd, const int dataSockfd, const char* file ,co
     }
 
     char buffer[MAX_LENGTH];
+    memset(buffer, 0, MAX_LENGTH);  // clear remaining file path?
 
-    while (true) {
-        if (receive_data(dataSockfd, NULL, buffer) == -1) {
-            printf("Error, receive_data() in \"%s()\"\n", __func__);
-            return -1;
-        }
-        if (strlen(buffer) == 0) break;
+    size_t bytes;
+    while ((bytes = read(dataSockfd, buffer, MAX_LENGTH)) > 0) {
         fwrite(buffer, strlen(buffer), sizeof(char), fd);
         memset(buffer, 0, MAX_LENGTH);
     }
 
-    char response[50];
+    char response[MAX_LENGTH];
     if (receive_data(controlSockfd, "226", response) == -1) {
         printf("Error, receive_data() in \"%s()\"\n", __func__);
         return -1;
