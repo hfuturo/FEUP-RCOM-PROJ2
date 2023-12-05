@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "../include/ftp.h"
 #include "../include/network.h"
@@ -81,7 +82,10 @@ int main(int argc, char** argv) {
     return close_socket(controlSockfd) || close_socket(dataSockfd);
 }
 
-// ftp://[user:password@]host/path/file.txt
+// ftp://host/path/file.txt                 user: anonymous     pass: anonymous
+// ftp://user:password@host/path/file.txt   user: anonymous     pass: anonymous
+// ftp://foo:@host.com/                     user: foo           pass: "" (empty)  
+// ftp://@host.com/                         user: empty("")     pass: anonymous
 int parse_url(const char* parameters, URL* url) {
     if (!url) {
         printf("Error, url is NULL in \"%s()\"\n", __func__);
@@ -90,20 +94,46 @@ int parse_url(const char* parameters, URL* url) {
 
     char param[MAX_LENGTH];
     strcpy(param, parameters);
+    char* token = param;
 
-    // resta: user:password@]host/path/file.txt
-    strtok(param, "[");
+    // resta /<user>:<password>@host/path/file.txt
+    strtok(token, "/");
 
-    // resta: password@]host/path/file.txt
-    strcpy(url->user, strtok(NULL, ":"));
+    // token = <user>:<password>@host/path/file.txt
+    token = strtok(NULL, "") + 1;
 
-    // resta: ]host/path/file.txt
-    strcpy(url->password, strtok(NULL, "@"));
+    if (strstr(token, "@")) {
 
-    // resta: path/file.txt
-    strcpy(url->host, strtok(NULL, "/") + 1);
+        if (strstr(token, ":")) {
+            // resta <password>@host/path/file.txt
+            strcpy(url->user, strtok(token, ":"));
 
-    char* token = strtok(NULL, "");
+            // token = <password>@host/path/file.txt
+            token = strtok(NULL, "");
+
+            if (token[0] == '@') {
+                strcpy(url->password, "");
+                token = strtok(token, "@");  // remove @ do token ; token = host/path/file.txt
+            }
+            else {
+                strcpy(url->password, strtok(token, "@"));
+                token = strtok(NULL, "");   // token = host/path/file.txt
+            }
+        }
+        else {
+            strcpy(url->user, "");
+            strcpy(url->password, "anonymous");
+            token = strtok(token, "@");   // remove @ do token ; token = host/path/file.txt
+        }
+    }
+    else {
+        strcpy(url->user, "anonymous");
+        strcpy(url->password, "anonymous");
+    }
+
+    strcpy(url->host, strtok(token, "/"));
+
+    token = strtok(NULL, "");
     strcpy(url->path, token);
 
     char* file = strrchr(token, '/');
