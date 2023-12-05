@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "../include/download.h"
 #include "../include/network.h"
@@ -36,6 +37,10 @@ int main(int argc, char** argv) {
         printf("Error, open_socket() in \"%s()\"\n", __func__);
         exit(-1);
     }
+
+    // espera 1 segundo para dar tempo para receber resposta do server
+    sleep(1);
+
     if (receive_data(controlSockfd, "220", response) == -1) {
         printf("Error, receive_data() in \"%s()\"\n", __func__);
         exit(-1);
