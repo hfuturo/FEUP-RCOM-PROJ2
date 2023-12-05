@@ -1,5 +1,5 @@
-#ifndef _FTP_H_
-#define _FTP_H_
+#ifndef _DOWNLOAD_H_
+#define _DOWNLOAD_H_
 
 #define MAX_LENGTH 612
 

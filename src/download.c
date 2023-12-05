@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "../include/ftp.h"
+#include "../include/download.h"
 #include "../include/network.h"
 
 int main(int argc, char** argv) {

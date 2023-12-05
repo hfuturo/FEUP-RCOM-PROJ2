@@ -1,7 +1,7 @@
 #ifndef _NETWORK_H_
 #define _NETWORK_H_
 
-#include "ftp.h"
+#include "download.h"
 
 #define SERVER_PORT 21
 
