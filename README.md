@@ -22,10 +22,13 @@ $ make run_teste
 ```bash
 $ make run_testeX
 ```
-X = (1 a 5)
+X = (1 a 7)
 
 ### Limpar:
 
 ```bash
 $ make clean
 ```
+
+---
+Grade: 17.9
